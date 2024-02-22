@@ -332,12 +332,12 @@ function getInfo(filename)
 			{
 				const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
 				var str = "Size:\n\n";
-				str += "    X: " + size.x.toFixed(3) + "\n";
-				str += "    Y: " + size.z.toFixed(3) + "\n";
-				str += "    Z: " + size.y.toFixed(3) + "\n";
+				str += "   X: " + size.x.toFixed(3) + "\n";
+				str += "   Y: " + size.z.toFixed(3) + "\n";
+				str += "   Z: " + size.y.toFixed(3) + "\n";
 				str += "\nAnimations list:\n\n";
 				for (var i = 0; i < model.animations.length; i++)
-					str += "    " + model.animations[i].name + "\n";
+					str += "   " + model.animations[i].name + "\n";
 				alert(str);
 				busy = false;
 			},
