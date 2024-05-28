@@ -80,16 +80,20 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Load model", (id, filename) =>
 					id = result.object.id;
 					const model = gltf.scene;
 					const newModel = new THREE.Mesh().add(model);
-					const oldModel = getModel(id);
+					var oldModel = getModel(id);
 					const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
 					model.position.set(0, size.y * 0.5, 0);
 					model.animations = gltf.animations;
 					fixMaterial(model, true, true);
-					if (!!oldModel)
-						result.object.mesh.children.shift();
 					if (!!result.object.mesh)
+					{
+						if (!!oldModel)
+							result.object.mesh.children.shift();
 						while (result.object.mesh.children.length > 0)
 							newModel.add(result.object.mesh.children[0]);
+					}
+					else
+						oldModel = null;
 					if (!oldModel)
 					{
 						result.object.currentState.graphicID = 0;
