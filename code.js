@@ -12,17 +12,17 @@ loader.setPath(RPM.Manager.Plugins.getParameter(pluginName, "Models directory pa
 var mixerList = [];
 var queue = [];
 var busy = false;
-var mapID = 0;
+var lastMap = null;
 
 setInterval(function ()
 {
 	if (RPM.Manager.Stack.top instanceof RPM.Scene.Map && !RPM.Scene.Map.current.loading)
 	{
 		const delta = clock.getDelta();
-		if (mapID != RPM.Scene.Map.current.id)
+		if (RPM.Scene.Map.current !== lastMap)
 		{
 			mixerList = [];
-			mapID = RPM.Scene.Map.current.id;
+			lastMap = RPM.Scene.Map.current;
 		}
 		for (var i = 1; i < mixerList.length; i++)
 			if (!!mixerList[i])
