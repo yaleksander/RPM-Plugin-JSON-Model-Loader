@@ -202,7 +202,7 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Set scale", (id, scale) =>
 		callNext();
 });
 
-RPM.Manager.Plugins.registerCommand(pluginName, "Set visibility", (id, enabled) =>
+RPM.Manager.Plugins.registerCommand(pluginName, "Set opacity", (id, opacity) =>
 {
 	if (id == -1)
 		id = RPM.Core.ReactionInterpreter.currentObject.id;
@@ -210,7 +210,7 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Set visibility", (id, enabled) 
 	{
 		const model = getModel(id);
 		if (!!model)
-			model.visible = enabled;
+			model.children[0].material.opacity = opacity;
 		callNext();
 	});
 	if (!busy)
