@@ -33,10 +33,15 @@ setInterval(function ()
 function callNext()
 {
     busy = true;
-    if (queue.length > 0)
-        queue.shift().call();
+    if (RPM.Scene.Map.current !== lastMap)
+        setTimeout(callNext, 17);
     else
-        busy = false;
+    {
+        if (queue.length > 0)
+            queue.shift().call();
+        else
+            busy = false;
+    }
 }
 
 function getModel(id)
