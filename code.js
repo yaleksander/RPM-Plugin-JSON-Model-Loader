@@ -53,6 +53,10 @@ function getModel(id)
 
 function fixMaterial(model, cast, receive)
 {
+	if (!model)
+		return;
+	if (!!model.geometry)
+		model.geometry.computeVertexNormals();
     if (!!model.material)
     {
         model.castShadow = cast;
