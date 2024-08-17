@@ -53,14 +53,14 @@ function getModel(id)
 
 function fixMaterial(model, cast, receive)
 {
-	if (!model)
-		return;
-	if (!!mesh.geometry)
-	{
-		mesh.geometry.computeVertexNormals();
-		mesh.geometry.boundingBox.expandByObject(mesh);
-		mesh.geometry.boundingSphere.radius = mesh.geometry.boundingBox.getSize(new THREE.Vector3()) * 1.5;
-	}
+    if (!model)
+        return;
+    if (!!model.geometry)
+    {
+        model.geometry.computeVertexNormals();
+        model.geometry.boundingBox.expandByObject(model);
+        model.geometry.boundingSphere.radius = model.geometry.boundingBox.getSize(new THREE.Vector3()) * 1.5;
+    }
     if (!!model.material)
     {
         model.castShadow = cast;
