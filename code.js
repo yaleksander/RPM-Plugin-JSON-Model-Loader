@@ -140,6 +140,12 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Load model", (id, filename) =>
 					while (mixerList.length <= id)
 						mixerList.push(null);
 					mixerList[id] = new THREE.AnimationMixer(model);
+					mixerList[id].queue = [];
+					mixerList[id].addEventListener("finished", function (e)
+					{
+						if (mixerList[id].queue.length > 0)
+							mixerList[id].queue.shift().play();
+					});
 					if (result.object.isHero)
 						mixerList[0] = mixerList[id];
 					callNext();
@@ -343,7 +349,7 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Look at", (objID, tgtID) =>
 		callNext();
 });
 
-RPM.Manager.Plugins.registerCommand(pluginName, "Play animation", (id, name, loop) =>
+RPM.Manager.Plugins.registerCommand(pluginName, "Play animation", (id, name, loop, speed) =>
 {
 	if (id == -1)
 		id = RPM.Core.ReactionInterpreter.currentObject.id;
@@ -356,7 +362,32 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Play animation", (id, name, loo
 		if (!!mixerList[id] && !!anim)
 		{
 			mixerList[id].stopAllAction();
-			mixerList[id].clipAction(anim).setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce).play();
+			const action = mixerList[id].clipAction(anim);
+			action.timeScale = speed;
+			action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce).play();
+		}
+		callNext();
+	});
+	if (!busy)
+		callNext();
+});
+
+RPM.Manager.Plugins.registerCommand(pluginName, "Queue animation", (id, name, loop, speed) =>
+{
+	if (id == -1)
+		id = RPM.Core.ReactionInterpreter.currentObject.id;
+	queue.push(function ()
+	{
+		const model = getModel(id);
+		if (!model)
+			return;
+		const anim = THREE.AnimationClip.findByName(model.animations, name);
+		if (!!mixerList[id] && !!anim)
+		{
+			const action = mixerList[id].clipAction(anim);
+			action.timeScale = speed;
+			action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce);
+			mixerList[id].queue.push(action);
 		}
 		callNext();
 	});
