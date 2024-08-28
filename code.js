@@ -97,61 +97,65 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Load model", (id, filename) =>
 			const gltf = await loader.loadAsync(filename);
 			RPM.Core.MapObject.search(id, (result) =>
 			{
-				if (!!result)
+				id = result.object.id;
+				const model = gltf.scene;
+				const newModel = new THREE.Mesh().add(model);
+				var oldModel = getModel(id);
+				const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
+				model.position.set(0, size.y * 0.5, 0);
+				model.animations = gltf.animations;
+				fixMaterial(model, true, true);
+				if (!!result.object.mesh)
 				{
-					id = result.object.id;
-					const model = gltf.scene;
-					const newModel = new THREE.Mesh().add(model);
-					var oldModel = getModel(id);
-					const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
-					model.position.set(0, size.y * 0.5, 0);
-					model.animations = gltf.animations;
-					fixMaterial(model, true, true);
-					if (!!result.object.mesh)
-					{
-						if (!!oldModel)
-							result.object.mesh.children.shift();
-						while (result.object.mesh.children.length > 0)
-							newModel.add(result.object.mesh.children[0]);
-					}
-					else
-						oldModel = null;
-					if (!oldModel)
-					{
-						result.object.currentState.graphicID = 0;
-						result.object.changeState();
-						result.object.currentStateInstance.graphicKind = 10;
-					}
-					RPM.Scene.Map.current.scene.remove(result.object.mesh);
-					result.object.mesh = newModel;
-					RPM.Scene.Map.current.scene.add(result.object.mesh);
-					result.object.boundingBoxSettings =
-					{
-						b: [[0, size.y * 0.5, 0, size.x, size.y, size.z, 0, 0, 0]],
-						d: 1,
-						h: 1,
-						k: true,
-						l: new THREE.Vector3(0.01, 0.01, 0.01),
-						m: 1,
-						p: RPM.Core.Position.createFromVector3(result.object.position),
-						w: 1
-					};
-					result.object.updateBB(result.object.position);
-					while (mixerList.length <= id)
-						mixerList.push(null);
-					mixerList[id] = new THREE.AnimationMixer(model);
-					mixerList[id].queue = [];
-					mixerList[id].addEventListener("finished", function (e)
-					{
-						if (mixerList[id].queue.length > 0)
-							mixerList[id].queue.shift().play();
-					});
-					if (result.object.isHero)
-						mixerList[0] = mixerList[id];
-					callNext();
+					if (!!oldModel)
+						result.object.mesh.children.shift();
+					while (result.object.mesh.children.length > 0)
+						newModel.add(result.object.mesh.children[0]);
 				}
 				else
-					RPM.Common.Platform.showErrorMessage("Error: couldn't find map object with ID " + id.toString());
+					oldModel = null;
+				if (!oldModel)
+				{
+					result.object.currentState.graphicID = 0;
+					result.object.changeState();
+					result.object.currentStateInstance.graphicKind = 10;
+				}
+				RPM.Scene.Map.current.scene.remove(result.object.mesh);
+				result.object.mesh = newModel;
+				RPM.Scene.Map.current.scene.add(result.object.mesh);
+				result.object.boundingBoxSettings =
+				{
+					b: [[0, size.y * 0.5, 0, size.x, size.y, size.z, 0, 0, 0]],
+					d: 1,
+					h: 1,
+					k: true,
+					l: new THREE.Vector3(0.01, 0.01, 0.01),
+					m: 1,
+					p: RPM.Core.Position.createFromVector3(result.object.position),
+					w: 1
+				};
+				result.object.updateBB(result.object.position);
+				while (mixerList.length <= id)
+					mixerList.push(null);
+				mixerList[id] = new THREE.AnimationMixer(model);
+				mixerList[id].queue = [];
+				mixerList[id].addEventListener("finished", function (e)
+				{
+					if (mixerList[id].queue.length > 0)
+					{
+						const action = mixerList[id].queue.shift().play();
+						action.clampWhenFinished = true;
+						if (!!mixerList[id].currentAnim)
+						{
+							mixerList[id].currentAnim.crossFadeTo(action, 0);
+							mixerList[id].currentAnim.stop();
+						}
+						mixerList[id].currentAnim = action;
+					}
+				});
+				if (result.object.isHero)
+					mixerList[0] = mixerList[id];
+				callNext();
 			}, RPM.Core.ReactionInterpreter.currentObject);
 		}
 		catch (e)
@@ -174,12 +178,9 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Reset bounding box", (id) =>
 		{
 			RPM.Core.MapObject.search(id, (result) =>
 			{
-				if (!!result)
-				{
-					const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
-					result.object.boundingBoxSettings.b[0] = [0, size.y * 0.5, 0, size.x, size.y, size.z, 0, 0, 0];
-					result.object.updateBB(result.object.position);
-				}
+				const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
+				result.object.boundingBoxSettings.b[0] = [0, size.y * 0.5, 0, size.x, size.y, size.z, 0, 0, 0];
+				result.object.updateBB(result.object.position);
 			}, RPM.Core.ReactionInterpreter.currentObject);
 		}
 		callNext();
@@ -202,11 +203,8 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Set bounding box", (id, x, y, z
 			z = Math.abs(z * RPM.Datas.Systems.SQUARE_SIZE);
 			RPM.Core.MapObject.search(id, (result) =>
 			{
-				if (!!result)
-				{
-					result.object.boundingBoxSettings.b[0] = [0, y * 0.5, 0, x, y, z, 0, 0, 0];
-					result.object.updateBB(result.object.position);
-				}
+				result.object.boundingBoxSettings.b[0] = [0, y * 0.5, 0, x, y, z, 0, 0, 0];
+				result.object.updateBB(result.object.position);
 			}, RPM.Core.ReactionInterpreter.currentObject);
 		}
 		callNext();
@@ -361,10 +359,16 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Play animation", (id, name, loo
 		const anim = THREE.AnimationClip.findByName(model.animations, name);
 		if (!!mixerList[id] && !!anim)
 		{
-			mixerList[id].stopAllAction();
 			const action = mixerList[id].clipAction(anim);
+			action.clampWhenFinished = true;
 			action.timeScale = speed;
 			action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce).play();
+			if (!!mixerList[id].currentAnim)
+			{
+				mixerList[id].currentAnim.crossFadeTo(action, 0);
+				mixerList[id].currentAnim.stop();
+			}
+			mixerList[id].currentAnim = action;
 		}
 		callNext();
 	});
@@ -385,6 +389,7 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Queue animation", (id, name, lo
 		if (!!mixerList[id] && !!anim)
 		{
 			const action = mixerList[id].clipAction(anim);
+			action.clampWhenFinished = true;
 			action.timeScale = speed;
 			action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce);
 			mixerList[id].queue.push(action);
