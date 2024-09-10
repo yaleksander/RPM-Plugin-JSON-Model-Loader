@@ -428,11 +428,15 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Set animation speed", (id, spee
 		callNext();
 });
 
-RPM.Manager.Plugins.registerCommand(pluginName, "Trigger event", (id) =>
+RPM.Manager.Plugins.registerCommand(pluginName, "Trigger event", (id, self) =>
 {
+	const obj = RPM.Core.ReactionInterpreter.currentObject;
 	queue.push(function ()
 	{
-		RPM.Manager.Events.sendEventDetection(null, -1, false, id, [null]);
+		if (self)
+			obj.receiveEvent(obj, false, id, [null], obj.states);
+		else
+			RPM.Manager.Events.sendEventDetection(null, -1, false, id, [null]);
 		callNext();
 	});
 	if (!busy)
