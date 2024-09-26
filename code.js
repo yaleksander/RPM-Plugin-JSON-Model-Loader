@@ -86,6 +86,16 @@ function fixMaterial(model, cast, receive)
 		fixMaterial(model.children[i], cast, receive);
 }
 
+function hasSkinnedChildren(mesh)
+{
+	if (mesh.isSkinnedMesh)
+		return true;
+	for (var i = 0; i < mesh.children.length; i++)
+		if (hasSkinnedChildren(mesh.children[i]))
+			return true;
+	return false;
+}
+
 RPM.Manager.Plugins.registerCommand(pluginName, "Load model", (id, filename) =>
 {
 	if (id == -1)
@@ -95,11 +105,16 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Load model", (id, filename) =>
 		try
 		{
 			const gltf = await loader.loadAsync(filename);
+			const model = gltf.scene;
+			var newModel = new THREE.Group().add(model);
+			if (hasSkinnedChildren(model))
+			{
+				newModel.mapLoopPlugin_isGLTFRoot = true;
+				newModel = new THREE.Group().add(newModel);
+			}
 			RPM.Core.MapObject.search(id, (result) =>
 			{
 				id = result.object.id;
-				const model = gltf.scene;
-				const newModel = new THREE.Mesh().add(model);
 				var oldModel = getModel(id);
 				const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
 				model.position.set(0, size.y * 0.5, 0);
