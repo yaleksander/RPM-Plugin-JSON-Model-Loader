@@ -24,8 +24,18 @@ setInterval(function ()
 			lastMap = RPM.Scene.Map.current;
 		}
 		for (var i = 1; i < mixerList.length; i++)
+		{
 			if (!!mixerList[i])
-				mixerList[i].update(delta * mixerList[i].timeScale);
+			{
+				if (mixerList[i].mapObj.removed)
+				{
+					mixerList[i].getRoot().removeFromParent();
+					mixerList[i] = null;
+				}
+				else
+					mixerList[i].update(delta * mixerList[i].timeScale);
+			}
+		}
 	}
 }, 16);
 
@@ -154,6 +164,7 @@ RPM.Manager.Plugins.registerCommand(pluginName, "Load model", (id, filename) =>
 					mixerList.push(null);
 				mixerList[id] = new THREE.AnimationMixer(model);
 				mixerList[id].queue = [];
+				mixerList[id].mapObj = result.object;
 				mixerList[id].addEventListener("finished", function (e)
 				{
 					if (mixerList[id].queue.length > 0)
